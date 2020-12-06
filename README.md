@@ -11,14 +11,21 @@ REST API server that serves capstone.
 
 
 ## Run the server
-Run the server ```uvicorn main:app --reload```
+Run the server 
 
-Run server on specific port ``` uvicorn main:app --reload --port <port number>```
+```uvicorn main:app --reload```
+
+Run server on specific port 
+
+``` uvicorn main:app --reload --port <port number>```
 
 ## Access the API UI
-On your browser, go to ```http://127.0.0.1:8000/docs```
+On your browser, go to 
+
+```http://127.0.0.1:8000/docs```
 
 ## REST endpoints 
 /test
+
 ```{"Hello" : "World"}```
 
