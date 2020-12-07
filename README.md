@@ -1,6 +1,11 @@
 # Capstone API server
 REST API server that serves capstone. 
 
+## Docs
+[Firestore SDK](https://firebase.google.com/docs/firestore/quickstart)
+[Uvicorn](https://www.uvicorn.org/)
+[FastAPI](https://fastapi.tiangolo.com/features/)
+
 ### Getting started
 
 ## Requirements
