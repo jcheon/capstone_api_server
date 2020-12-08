@@ -31,6 +31,13 @@ On your browser, go to
 
 ```http://127.0.0.1:8000/docs```
 
+### Covered types of places
+[Place Types docs](https://developers.google.com/places/web-service/supported_types)
+\ngas_station
+\nrestaurant
+\nsupermarket
+\n\nthe rest of the places will be covered by the 'else' attributes in the Firebase 'cards' collection. 
+
 ### REST endpoints 
 /test
 
