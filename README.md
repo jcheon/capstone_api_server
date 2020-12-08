@@ -37,7 +37,7 @@ the rest of the places will be covered by the 'else' attributes in the Firebase 
 ## REST endpoints 
 /latlong/user_id <br/>
 Returns stores within 500m in radius with best card recommendation for that user. <br/>
-''' 
+```
 {
         "store_name": str,
         "card_bank": str,
@@ -49,5 +49,5 @@ Returns stores within 500m in radius with best card recommendation for that user
 .
 .
 .
-'''
+```
 
