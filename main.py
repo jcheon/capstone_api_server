@@ -1,4 +1,3 @@
-
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
@@ -22,6 +21,24 @@ key = keys_json["google_places"]
 
 #start fastapi
 app = FastAPI()
+
+@app.post("/add_creditcard/")
+def add_creditcard(uid, card_id):
+    user_info_ref = db.collection(u'user_info').document(u'{uid}'.format(uid=uid))
+
+    curr_cards = user_info_ref.get()
+    curr_cards = curr_cards.to_dict()['cards']
+
+    for c in curr_cards: 
+        if c == card_id: 
+            return {'status_code': 406} #Not Acceptable This response is sent when the web server, after performing server-driven content negotiation, doesn't find any content that conforms to the criteria given by the user agent. 
+        
+    curr_cards.append('{card_id}'.format(card_id = card_id))
+
+    user_info_ref.set({'cards': curr_cards}, merge=True)
+
+    return {'status_code': 200}
+
 
 # looks for document with uid. 
 # Returns dict of cards that user has
@@ -54,6 +71,7 @@ def read_cc():
     return cc_json
 
 @app.get("/best_else")
+#TODO: return multiple when there are ties. 
 def best_else_card(uid): 
     user_cards = read_user_card_info(uid)
     cc_db = read_cc()
@@ -62,6 +80,7 @@ def best_else_card(uid):
     best_cashback_card = ''
     best_cashback_img = ''
     best_cashback_bank = ''
+
     for c in user_cards['cards']:
         if best_cashback < cc_db[c]['category']['else']: 
             best_cashback = cc_db[c]['category']['else']
@@ -87,6 +106,7 @@ def main_query(latlong, userid):
     # #location = "39.7260327,-121.804"
     radius = 1000
     location = latlong
+    #TODO: later need to change to give me specific types of places multiple times. Currently returns some garbage locations. 
     req = requests.get("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={location}&radius={radius}&key={key}".format(location=location, radius=radius, key=key))
     req_json = req.json()
     len_result = len(req_json['results'])
@@ -114,7 +134,7 @@ def main_query(latlong, userid):
 
                     except: 
                         print('no restaurant: ' + c)
-            
+
             if(t == 'gas_station'):
                 for c in user_card_info['cards']: 
                     try: 
@@ -155,7 +175,7 @@ def main_query(latlong, userid):
 
         final_list.append(curr_json)
 
- 
+
     for d in range(len(final_list)): 
         final_json[d] = final_list[d]
 
