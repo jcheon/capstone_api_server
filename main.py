@@ -10,12 +10,6 @@ import requests
 #   userid = 2nnKFsmSWQSrqP2w6eFYzXhb8Cr1
 #   location = 39.7260327,-121.804
 
-#TODO: MAKE GET REQUEST TO FIRESTORE
-#    - https://firebase.google.com/docs/firestore/use-rest-api
-#        - using the rest api. 
-#    - https://firebase.google.com/docs/admin/setup?authuser=1#python_4 
-#        Add firebase admin sdk to your server? this might work. 
-
 # connect to firebase firestore 
 cred = credentials.Certificate("cc-app-29660-firebase-adminsdk-ssi40-030cc8e94c.json")
 firebase_admin.initialize_app(cred)
@@ -66,15 +60,20 @@ def best_else_card(uid):
 
     best_cashback = -1
     best_cashback_card = ''
+    best_cashback_img = ''
+    best_cashback_bank = ''
     for c in user_cards['cards']:
         if best_cashback < cc_db[c]['category']['else']: 
             best_cashback = cc_db[c]['category']['else']
             best_cashback_card = c
+            best_cashback_img = cc_db[c]['img']
+            best_cashback_bank = cc_db[c]['bank']
 
 
-    return {'card': best_cashback_card, 'cash_back': best_cashback}
-    
+    return {'card': best_cashback_card, 'cash_back': best_cashback, 'bank': best_cashback_bank, 'img': best_cashback_img}
 
+
+# holy.. this code is so ugly.. 
 @app.get("/latlong/userid")
 def main_query(latlong, userid):
     # Get all of card data from firestore
@@ -86,7 +85,7 @@ def main_query(latlong, userid):
     best_else = best_else_card(userid)
 
     # #location = "39.7260327,-121.804"
-    radius = 2000
+    radius = 1000
     location = latlong
     req = requests.get("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={location}&radius={radius}&key={key}".format(location=location, radius=radius, key=key))
     req_json = req.json()
@@ -96,16 +95,15 @@ def main_query(latlong, userid):
     final_list = []
 
     for i in range(len_result):
+        max_cashback = -1
+        max_cashback_card = ''
+        max_cashback_bank = ''
+        max_cashback_img = ''
         curr_json = {}
         curr_json['place'] = req_json['results'][i]['name']
 
         for t in req_json['results'][i]['types']:
             if(t == 'restaurant'):
-                max_cashback = -1
-                max_cashback_card = ''
-                max_cashback_bank = ''
-                max_cashback_img = ''
-
                 for c in user_card_info['cards']:
                     try: 
                         if max_cashback < cards_db[c]['category']['restaurant']: 
@@ -113,39 +111,24 @@ def main_query(latlong, userid):
                             max_cashback_card = c
                             max_cashback_bank = cards_db[c]['bank']
                             max_cashback_img = cards_db[c]['img']
+
                     except: 
                         print('no restaurant: ' + c)
-                
-                curr_json['cash_back'] = max_cashback
-                curr_json['card'] = max_cashback_card
-                curr_json['card_bank'] = max_cashback_bank
-                curr_json['img'] = max_cashback_img
             
-            elif(t == 'gas_station'):
-                max_cashback = -1
-                max_cashback_card = ''
-                max_cashback_bank = ''
-                max_cashback_img = ''
-                for x in user_card_info['cards']: 
+            if(t == 'gas_station'):
+                for c in user_card_info['cards']: 
                     try: 
-                        if max_cashback < cards_db[c]['category']['restaurant']:
-                            max_cashback = cards_db[c]['category']['restaurant']
+                        if max_cashback < cards_db[c]['category']['gas_station']:
+                            max_cashback = cards_db[c]['category']['gas_station']
                             max_cashback_card = c
                             max_cashback_bank = cards_db[c]['bank']
                             max_cashback_img = cards_db[c]['img']
+
                     except: 
                         print('no gas station: ' + c)
-                curr_json['cash_back'] = max_cashback
-                curr_json['card'] = max_cashback_card
-                curr_json['card_bank'] = max_cashback_bank
-                curr_json['img'] = max_cashback_img
 
-            elif(t == 'supermarket'):
-                max_cashback = -1
-                max_cashback_card = ''
-                max_cashback_bank = ''
-                max_cashback_img = ''
-                for x in user_card_info['cards']: 
+            if(t == 'supermarket'):
+                for c in user_card_info['cards']: 
                     try: 
                         if max_cashback < cards_db[c]['category']['grocery']:
                             max_cashback = cards_db[c]['category']['grocery']
@@ -154,16 +137,21 @@ def main_query(latlong, userid):
                             max_cashback_img = cards_db[c]['img']
                     except: 
                         print('no market: ' + c)
-                curr_json['cash_back'] = max_cashback
-                curr_json['card'] = max_cashback_card
-                curr_json['card_bank'] = max_cashback_bank
-                curr_json['img'] = max_cashback_img
 
-        if 'cash_back' in curr_json: 
+        curr_json['cash_back'] = max_cashback
+        curr_json['card'] = max_cashback_card
+        curr_json['card_bank'] = max_cashback_bank
+        curr_json['img'] = max_cashback_img
+
+        # if 'cash_back' in curr_json: 
+        if curr_json['cash_back'] != -1: 
             pass
         else: 
             curr_json['cash_back'] = best_else['cash_back']
             curr_json['card'] = best_else['card']
+            curr_json['card_bank'] = best_else['bank']
+            curr_json['img'] = best_else['img']
+
 
         final_list.append(curr_json)
 
@@ -171,6 +159,4 @@ def main_query(latlong, userid):
     for d in range(len(final_list)): 
         final_json[d] = final_list[d]
 
-
-    # print(final_json)
     return final_json
